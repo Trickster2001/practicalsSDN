@@ -1,0 +1,42 @@
+mutable struct Adadelta <:DescentMethod
+γs # gradient decay
+γx # update decay
+ε  # small value
+s  # sum of squared gradients
+u  # sum of squared updates
+end
+
+function init!(M::Adadelta,f,df,x)
+M.s = zeros(length(x))
+M.u = zeros(length(x))
+return M
+end
+
+function f(x) 
+return 4x^2 + 3x+2
+end
+
+df(x)=4*x
+
+using Flux
+
+M=Adadelta(0.1, 0.1, 0.1, 0.1,0.1)
+
+function step!(M::Adadelta,f,df,x)
+γs , γx, ε,s,u,g =M.γs, M.γx, M.ε , M.s, M.u, df(x)
+#s[:] = γs*s+(1-γs)*g.*g
+s=γs*s+(1-γs)*g.*g
+Δx= -(sqrt.(u).+ε) ./(sqrt.(s) .+ε) .*g
+#u[:]=γx*u + (1-γx)*Δx.*Δx
+u = γx*u + (1-γx)*Δx.*Δx
+b= x+Δx
+return b
+end
+
+function iterationAdadelta(x)
+b=x
+for i in 1:10
+println(step!(M::Adadelta,f,df,b))
+b=step!(M::Adadelta,f,df,b)
+end
+end
